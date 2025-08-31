@@ -97,7 +97,6 @@ const VariantList = ({
     }
   };
 
-  // Dynamically generate groupBy and filter options from variant names
   const uniqueVariantNames = [...new Set(variants.map(v => v.name).filter(name => name.trim() !== ''))];
   useEffect(() => {
     if (!uniqueVariantNames.includes(groupBy) && uniqueVariantNames.length > 0) {
@@ -107,9 +106,9 @@ const VariantList = ({
 
   const handleSelectAllToggle = () => {
     if (selectedVariants.size === variants.length) {
-      handleSelectAll(false); // Deselect all
+      handleSelectAll(false);
     } else {
-      handleSelectAll(true); // Select all
+      handleSelectAll(true);
     }
   };
 
@@ -118,7 +117,7 @@ const VariantList = ({
       ...prev,
       [variantName]: value,
     }));
-    setActiveDropdown(null); // Close dropdown after selection
+    setActiveDropdown(null);
   };
 
   const handleClearFilter = (variantName) => {
@@ -127,26 +126,30 @@ const VariantList = ({
       delete newFilters[variantName];
       return newFilters;
     });
-    setActiveDropdown(null); // Close dropdown after clearing
+    setActiveDropdown(null);
   };
 
   const handleClearAllFilters = () => {
     setFilters({});
     setSearchTerm('');
-    setActiveDropdown(null); // Close all dropdowns
+    setActiveDropdown(null);
   };
 
   const handleGroupByChange = (value) => {
     setGroupBy(value);
-    setActiveDropdown(null); // Close dropdown after selection
+    setActiveDropdown(null);
   };
 
   const filteredGrouped = Object.fromEntries(
-    Object.entries(grouped).filter(([group]) => {
-      return !Object.entries(filters).some(([name, value]) => {
-        return name !== group && value && !group.toLowerCase().includes(value.toLowerCase());
-      }) && (!searchTerm || group.toLowerCase().includes(searchTerm.toLowerCase()));
-    })
+    Object.entries(grouped).map(([group, subs]) => {
+      const matchesFilters = Object.entries(filters).every(([filterName, filterValue]) => {
+        if (!filterValue) return true;
+        const groupMatches = group.toLowerCase().includes(filterValue.toLowerCase());
+        const subMatches = subs.some(sub => sub.name.toLowerCase().includes(filterValue.toLowerCase()));
+        return groupMatches || subMatches;
+      });
+      return matchesFilters ? [group, subs] : null;
+    }).filter(Boolean)
   );
 
   const toggleDropdown = (dropdownName) => {
@@ -196,7 +199,7 @@ const VariantList = ({
           <div className="flex justify-between items-center mb-4 border-t border-gray-200 pt-6">
             <div className="relative">
               <div className="flex gap-2 items-center">
-                <span className='font-semibold'>Group By</span>
+                <span className="font-semibold">Group By</span>
                 <button
                   onClick={() => toggleDropdown('groupBy')}
                   className="flex items-center justify-center bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-fit"
@@ -427,6 +430,22 @@ const VariantList = ({
                       <span className="text-gray-500 text-sm">{subs.length} variant{subs.length > 1 ? 's' : ''}</span>
                     </button>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={`₹ ${variants.find(v => v.name === group)?.price?.toFixed(2) || ''}`}
+                      onChange={(e) => updatePrice(group, e.target.value.replace('₹ ', ''))}
+                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onFocus={(e) => e.target.select()}
+                    />
+                    <input
+                      type="text"
+                      value={variants.find(v => v.name === group)?.inventory || ''}
+                      onChange={(e) => updateInventory(group, e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onFocus={(e) => e.target.select()}
+                    />
+                  </div>
                 </div>
 
                 {expandedGroups.has(group) && (
@@ -459,7 +478,6 @@ const VariantList = ({
                             </div>
                             <span className="font-medium">{sub.name}</span>
                           </div>
-
                           <div className="flex items-center gap-3">
                             <input
                               type="text"
