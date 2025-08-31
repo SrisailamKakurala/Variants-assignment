@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import VariantOption from './VariantOption';
-import { ChevronDown, ChevronRight, PlusCircle, Search, ImagePlus, ListFilterIcon } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlusCircle, ImagePlus, X, Search, ListFilter } from 'lucide-react';
 import Button from '../UI/Button';
 
 const VariantList = ({
@@ -33,6 +33,8 @@ const VariantList = ({
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const handleVariantDragStart = (e, variantId) => {
     const variantIndex = variants.findIndex(v => v.id === variantId);
@@ -95,7 +97,7 @@ const VariantList = ({
     }
   };
 
-  // Dynamically generate groupBy options from variant names
+  // Dynamically generate groupBy and filter options from variant names
   const uniqueVariantNames = [...new Set(variants.map(v => v.name).filter(name => name.trim() !== ''))];
   useEffect(() => {
     if (!uniqueVariantNames.includes(groupBy) && uniqueVariantNames.length > 0) {
@@ -109,6 +111,46 @@ const VariantList = ({
     } else {
       handleSelectAll(true); // Select all
     }
+  };
+
+  const handleFilterChange = (variantName, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [variantName]: value,
+    }));
+    setActiveDropdown(null); // Close dropdown after selection
+  };
+
+  const handleClearFilter = (variantName) => {
+    setFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[variantName];
+      return newFilters;
+    });
+    setActiveDropdown(null); // Close dropdown after clearing
+  };
+
+  const handleClearAllFilters = () => {
+    setFilters({});
+    setSearchTerm('');
+    setActiveDropdown(null); // Close all dropdowns
+  };
+
+  const handleGroupByChange = (value) => {
+    setGroupBy(value);
+    setActiveDropdown(null); // Close dropdown after selection
+  };
+
+  const filteredGrouped = Object.fromEntries(
+    Object.entries(grouped).filter(([group]) => {
+      return !Object.entries(filters).some(([name, value]) => {
+        return name !== group && value && !group.toLowerCase().includes(value.toLowerCase());
+      }) && (!searchTerm || group.toLowerCase().includes(searchTerm.toLowerCase()));
+    })
+  );
+
+  const toggleDropdown = (dropdownName) => {
+    setActiveDropdown(prev => (prev === dropdownName ? null : dropdownName));
   };
 
   return (
@@ -150,59 +192,192 @@ const VariantList = ({
       )}
 
       {hasValidVariants && (
-        <div className="flex justify-between items-center mb-4 border-t-1 border-gray-200 pt-6">
-          <div>
-            Group by
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm ml-2"
-            >
-              {uniqueVariantNames.map(name => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            {showSearch && (
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-40 pr-8"
-                  autoFocus
-                />
+        <div className="space-y-4">
+          <div className="flex justify-between items-center mb-4 border-t border-gray-200 pt-6">
+            <div className="relative">
+              <div className="flex gap-2 items-center">
+                <span className='font-semibold'>Group By</span>
+                <button
+                  onClick={() => toggleDropdown('groupBy')}
+                  className="flex items-center justify-center bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-fit"
+                >
+                  <span>{groupBy || 'Group by'}</span>
+                  <ChevronDown size={16} className="ml-2" />
+                </button>
+              </div>
+              {activeDropdown === 'groupBy' && (
+                <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="p-2 max-h-40 overflow-auto">
+                    {uniqueVariantNames.map(name => (
+                      <label key={name} className="block px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="groupBy"
+                          value={name}
+                          checked={groupBy === name}
+                          onChange={() => handleGroupByChange(name)}
+                          className="mr-2"
+                        />
+                        {name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {showSearch && (
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setShowSearch(false);
                   }}
-                  className="absolute right-2 text-gray-500 hover:text-gray-700"
-                  title="Close"
+                  className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 cursor-pointer text-red-400"
                 >
-                  ✕
+                  Cancel
+                </button>
+              )}
+              {!showSearch && (
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="p-2 hover:bg-gray-100 cursor-pointer border border-gray-300 rounded-lg"
+                >
+                  <div className="flex gap-2">
+                    <Search size={16} />
+                    <ListFilter size={16} />
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showSearch && (
+            <div className="space-y-4">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full pr-10"
+                  autoFocus
+                />
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  <X size={16} />
                 </button>
               </div>
-            )}
-            <button
-              onClick={() => setShowSearch(prev => !prev)}
-              className="p-2 hover:bg-gray-100 rounded"
-              title="Search"
-            >
-              <div className="flex gap-2 cursor-pointer">
-                <Search size={16} />
-                <ListFilterIcon size={16} />
+              {Object.keys(filters).length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {Object.entries(filters).map(([variantName, value]) => (
+                    <div key={`${variantName}-${value}`} className="relative">
+                      <button
+                        onClick={() => toggleDropdown(variantName)}
+                        className="flex items-center justify-center bg-white border border-gray-100 shadow rounded-full px-2 py-1 text-sm"
+                      >
+                        <span>{`${variantName} ${value}`}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleClearFilter(variantName);
+                          }}
+                          className="ml-1 text-gray-500 hover:text-gray-700"
+                        >
+                          <X size={12} />
+                        </button>
+                      </button>
+                      {activeDropdown === variantName && (
+                        <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
+                          <div className="p-2">
+                            {[...new Set(variants
+                              .filter(v => v.name === variantName)
+                              .flatMap(v => v.values.map(val => val.value))
+                              .filter(val => val.trim() !== ''))]
+                              .map(value => (
+                                <label key={value} className="block px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name={`filter-${variantName}`}
+                                    value={value}
+                                    checked={filters[variantName] === value}
+                                    onChange={() => handleFilterChange(variantName, value)}
+                                    className="mr-2"
+                                  />
+                                  {value}
+                                </label>
+                              ))}
+                            <button
+                              onClick={() => handleClearFilter(variantName)}
+                              className="w-full text-blue-600 hover:text-blue-700 text-sm mt-1"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleClearAllFilters}
+                    className="text-blue-600 hover:text-blue-700 text-sm cursor-pointer"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-2">
+                {uniqueVariantNames.map(variantName => (
+                  <div key={variantName} className="relative">
+                    <button
+                      onClick={() => toggleDropdown(variantName)}
+                      className="flex items-center justify-center bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-32"
+                    >
+                      <span>{filters[variantName] || `All ${variantName}`}</span>
+                      <ChevronDown size={16} className="ml-2" />
+                    </button>
+                    {activeDropdown === variantName && (
+                      <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
+                        <div className="p-2 max-h-40 overflow-auto">
+                          <label className="block px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={`filter-${variantName}`}
+                              value=""
+                              checked={!filters[variantName]}
+                              onChange={() => handleFilterChange(variantName, '')}
+                              className="mr-2"
+                            />
+                            All {variantName}
+                          </label>
+                          {[...new Set(variants
+                            .filter(v => v.name === variantName)
+                            .flatMap(v => v.values.map(val => val.value))
+                            .filter(val => val.trim() !== ''))]
+                            .map(value => (
+                              <label key={value} className="block px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name={`filter-${variantName}`}
+                                  value={value}
+                                  checked={filters[variantName] === value}
+                                  onChange={() => handleFilterChange(variantName, value)}
+                                  className="mr-2"
+                                />
+                                {value}
+                              </label>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            </button>
-          </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {hasValidVariants && (
-        <div>
-          <div className="flex justify-between items-center mb-4 border-t border-gray-200 pt-6">
+          <div className="flex justify-between items-center mb-4 border-y-1 border-gray-200 py-3 px-2 bg-gray-50">
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -225,94 +400,89 @@ const VariantList = ({
             </div>
           </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg mb-4">
-            {Object.entries(grouped).map(([group, subs]) => {
-              if (!searchTerm || group.toLowerCase().includes(searchTerm.toLowerCase())) {
-                return (
-                  <div key={group} className="mb-4 last:mb-0">
-                    <div className="flex items-center justify-between bg-white rounded-lg p-3 mb-2">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          className="custom-checkbox"
-                          checked={subs.length > 0 && subs.every(sub => selectedVariants.has(sub.name))}
-                          onChange={() => handleGroupSelect(group)}
-                        />
-                        <div
-                          className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center"
-                          onClick={() => triggerFileInput(group)}
-                        >
-                          {imageUrls[group] ? (
-                            <img src={imageUrls[group]} alt="Variant" className="w-full h-full object-cover rounded" />
-                          ) : (
-                            <ImagePlus size={16} className="text-blue-500" />
-                          )}
-                        </div>
-                        <button onClick={() => toggleGroup(group)} className="flex items-center gap-2 text-left">
-                          {expandedGroups.has(group) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                          <span className="font-medium">{group}</span>
-                          <span className="text-gray-500 text-sm">{subs.length} variant{subs.length > 1 ? 's' : ''}</span>
-                        </button>
-                      </div>
+          <div className="bg-white px-4 py-0 rounded-lg mb-4">
+            {Object.entries(filteredGrouped).map(([group, subs]) => (
+              <div key={group} className="mb-4 last:mb-0">
+                <div className="flex items-center justify-between bg-white rounded-lg p-3 mb-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      className="custom-checkbox"
+                      checked={subs.length > 0 && subs.every(sub => selectedVariants.has(sub.name))}
+                      onChange={() => handleGroupSelect(group)}
+                    />
+                    <div
+                      className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center"
+                      onClick={() => triggerFileInput(group)}
+                    >
+                      {imageUrls[group] ? (
+                        <img src={imageUrls[group]} alt="Variant" className="w-full h-full object-cover rounded" />
+                      ) : (
+                        <ImagePlus size={16} className="text-blue-500" />
+                      )}
                     </div>
-
-                    {expandedGroups.has(group) && (
-                      <div className="ml-6 space-y-2">
-                        {subs.map(sub => {
-                          const subVariantKey = `${group}-${sub.name}`;
-                          const subHasImage = imageUrls[subVariantKey];
-                          const inheritedImage = !subHasImage && imageUrls[group];
-
-                          return (
-                            <div key={sub.name} className="flex items-center justify-between bg-white rounded-lg p-3">
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="checkbox"
-                                  className="custom-checkbox"
-                                  checked={selectedVariants.has(sub.name)}
-                                  onChange={() => handleSubSelect(sub.name)}
-                                />
-                                <div
-                                  className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center"
-                                  onClick={() => triggerFileInput(subVariantKey)}
-                                >
-                                  {subHasImage ? (
-                                    <img src={imageUrls[subVariantKey]} alt="Sub-Variant" className="w-full h-full object-cover rounded" />
-                                  ) : inheritedImage ? (
-                                    <img src={imageUrls[group]} alt="Inherited Variant" className="w-full h-full object-cover rounded" />
-                                  ) : (
-                                    <ImagePlus size={16} className="text-blue-500" />
-                                  )}
-                                </div>
-                                <span className="font-medium">{sub.name}</span>
-                              </div>
-
-                              <div className="flex items-center gap-3">
-                                <input
-                                  type="text"
-                                  value={`₹ ${sub.price.toFixed(2)}`}
-                                  onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
-                                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  onFocus={(e) => e.target.select()}
-                                />
-                                <input
-                                  type="text"
-                                  value={sub.inventory}
-                                  onChange={(e) => updateInventory(sub.name, e.target.value)}
-                                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  onFocus={(e) => e.target.select()}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <button onClick={() => toggleGroup(group)} className="flex items-center gap-2 text-left">
+                      {expandedGroups.has(group) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      <span className="font-medium">{group}</span>
+                      <span className="text-gray-500 text-sm">{subs.length} variant{subs.length > 1 ? 's' : ''}</span>
+                    </button>
                   </div>
-                );
-              }
-              return null;
-            })}
+                </div>
+
+                {expandedGroups.has(group) && (
+                  <div className="ml-6 space-y-2">
+                    {subs.map(sub => {
+                      const subVariantKey = `${group}-${sub.name}`;
+                      const subHasImage = imageUrls[subVariantKey];
+                      const inheritedImage = !subHasImage && imageUrls[group];
+
+                      return (
+                        <div key={sub.name} className="flex items-center justify-between bg-white rounded-lg p-3">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              className="custom-checkbox"
+                              checked={selectedVariants.has(sub.name)}
+                              onChange={() => handleSubSelect(sub.name)}
+                            />
+                            <div
+                              className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center"
+                              onClick={() => triggerFileInput(subVariantKey)}
+                            >
+                              {subHasImage ? (
+                                <img src={imageUrls[subVariantKey]} alt="Sub-Variant" className="w-full h-full object-cover rounded" />
+                              ) : inheritedImage ? (
+                                <img src={imageUrls[group]} alt="Inherited Variant" className="w-full h-full object-cover rounded" />
+                              ) : (
+                                <ImagePlus size={16} className="text-blue-500" />
+                              )}
+                            </div>
+                            <span className="font-medium">{sub.name}</span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="text"
+                              value={`₹ ${sub.price.toFixed(2)}`}
+                              onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
+                              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              onFocus={(e) => e.target.select()}
+                            />
+                            <input
+                              type="text"
+                              value={sub.inventory}
+                              onChange={(e) => updateInventory(sub.name, e.target.value)}
+                              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              onFocus={(e) => e.target.select()}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           <input
