@@ -13,7 +13,9 @@ const useVariants = () => {
     setVariants([...variants, {
       id: newId,
       name: '',
-      values: [{ id: Date.now() + 1, value: '' }]
+      values: [{ id: Date.now() + 1, value: '' }],
+      price: 0,
+      inventory: 0
     }]);
   };
 
@@ -101,7 +103,6 @@ const useVariants = () => {
   const getPermutations = () => {
     if (variants.length === 0) return [];
 
-    // Filter variants with valid names and non-empty values
     const validVariants = variants.filter(v => v.name.trim());
     const valueLists = validVariants.map(v =>
       v.values
@@ -120,13 +121,13 @@ const useVariants = () => {
 
     const combos = cartesianProduct(...valueLists);
 
-    return combos.map(combo => {
+    return combos.map((combo) => {
       const name = combo.join(' / ');
-      const parts = optionNames.map((opt, i) => ({
-        option: opt,
-        value: combo[i] || ''
+      const parts = optionNames.map((option, index) => ({
+        option: option,
+        value: combo[index] || ''
       }));
-      const instance = variantInstances[name] || { price: 0.00, inventory: 0 };
+      const instance = variantInstances[name] || { price: 0, inventory: 0 };
       return { name, parts, ...instance };
     });
   };
@@ -139,11 +140,10 @@ const useVariants = () => {
       const newInst = { ...prev };
       currentNames.forEach(name => {
         if (!newInst[name]) {
-          newInst[name] = { price: 0.00, inventory: 0 };
+          newInst[name] = { price: 0, inventory: 0 };
         }
       });
 
-      // Clean up old instances
       Object.keys(newInst).forEach(name => {
         if (!currentNames.includes(name)) {
           delete newInst[name];
@@ -154,21 +154,64 @@ const useVariants = () => {
     });
   }, [variants]);
 
-  const updatePrice = (name, price) => {
-    const parsedPrice = parseFloat(price) || 0.00;
-    setVariantInstances(prev => ({
-      ...prev,
-      [name]: { ...prev[name], price: parsedPrice }
-    }));
+  const updatePrice = (name, price, isGroup = false) => {
+    const parsedPrice = parseFloat(price) || 0;
+
+    if (isGroup) {
+      // Set base price for the group (parent)
+      setVariantInstances(prev => {
+        const newInst = { ...prev };
+        const subNames = Object.keys(newInst).filter(n => n.includes(` / ${name}`) || n.includes(`${name} /`));
+        subNames.forEach(subName => {
+          newInst[subName] = { ...newInst[subName], price: parsedPrice };
+        });
+        return newInst;
+      });
+    } else {
+      // Update individual sub-variant price
+      setVariantInstances(prev => ({
+        ...prev,
+        [name]: { ...prev[name], price: parsedPrice }
+      }));
+    }
   };
 
   const updateInventory = (name, inventory) => {
     const parsedInventory = parseInt(inventory) || 0;
+    console.log(parsedInventory);
+    // Update individual sub-variant inventory
     setVariantInstances(prev => ({
       ...prev,
       [name]: { ...prev[name], inventory: parsedInventory }
     }));
+    console.log(variantInstances);
   };
+
+  const getGroupPriceDisplay = (groupName) => {
+    const grouped = getGroupedVariants();
+    const groupSubs = grouped[groupName] || [];
+    
+    if (groupSubs.length === 0) return '';
+
+    const prices = groupSubs.map(sub => sub.price || 0).filter(p => p > 0);
+    if (prices.length === 0) return '';
+
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    return minPrice === maxPrice ? minPrice.toString() : `${minPrice} - ${maxPrice}`;
+  };
+
+  const getGroupInventory = (groupName) => {
+    const grouped = getGroupedVariants();
+    const groupSubs = grouped[groupName] || [];
+    return groupSubs.reduce((sum, sub) => sum + (sub.inventory || 0), 0);
+  };
+
+  // Recompute permutations when variantInstances changes
+  useEffect(() => {
+    // Trigger a re-render by updating a dummy state or forcing recomputation
+  }, [variantInstances]);
 
   useEffect(() => {
     if (variants.length > 0) {
@@ -180,55 +223,54 @@ const useVariants = () => {
   }, [variants, groupBy]);
 
   const getGroupedVariants = () => {
-  const perms = getPermutations();
-  if (perms.length === 0) return { 'All': [] };
+    const perms = getPermutations();
+    if (perms.length === 0) return { 'All': [] };
 
-  const validVariants = variants.filter(v => v.name.trim());
+    const validVariants = variants.filter(v => v.name.trim());
 
-  // ✅ Case 1: Only ONE variant → return flat list (no nesting, no groups)
-  if (validVariants.length === 1) {
-    return {
-      All: perms.map(p => ({
-        ...p,
-        name: p.parts[0].value, // just show value (e.g., "SM")
-      })),
-    };
-  }
+    if (validVariants.length === 1) {
+      return {
+        All: perms.map(p => ({
+          ...p,
+          name: p.parts[0].value,
+          originalName: p.name
+        })),
+      };
+    }
 
-  // ✅ Case 2: Multiple variants → normal grouping
-  if (!groupBy || !variants.some(v => v.name.trim() === groupBy)) {
-    return { 'All': perms };
-  }
+    if (!groupBy || !variants.some(v => v.name.trim() === groupBy)) {
+      return { 'All': perms };
+    }
 
-  const groupIndex = variants.findIndex(v => v.name.trim() === groupBy);
-  if (groupIndex === -1) return { 'All': perms };
+    const groupIndex = variants.findIndex(v => v.name.trim() === groupBy);
+    if (groupIndex === -1) return { 'All': perms };
 
-  const groups = {};
-  perms.forEach(p => {
-    const groupValue = p.parts.find(part => part.option === groupBy)?.value || 'Unknown';
-    if (!groupValue) return;
+    const groups = {};
+    perms.forEach(p => {
+      const groupValue = p.parts.find(part => part.option === groupBy)?.value || 'Unknown';
+      if (!groupValue) return;
 
-    if (!groups[groupValue]) groups[groupValue] = [];
+      if (!groups[groupValue]) groups[groupValue] = [];
 
-    const otherParts = p.parts.filter(part => part.option !== groupBy);
-    const subName = otherParts.map(part => part.value).join(' / ');
+      const otherParts = p.parts.filter(part => part.option !== groupBy);
+      const subName = otherParts.map(part => part.value).join(' / ');
 
-    // 🔥 If no other parts, just use the group value
-    const finalName = subName || groupValue;
+      const finalName = subName || groupValue;
 
-    groups[groupValue].push({ ...p, name: finalName });
-  });
+      groups[groupValue].push({ 
+        ...p, 
+        name: finalName,
+        originalName: p.name
+      });
+    });
 
-  return groups;
-};
-
-
-
+    return groups;
+  };
 
   useEffect(() => {
     const groups = Object.keys(getGroupedVariants());
     setExpandedGroups(new Set(groups));
-  }, [groupBy, variants]);
+  }, [groupBy, variants, variantInstances]);
 
   const toggleGroup = (group) => {
     setExpandedGroups(prev => {
@@ -318,6 +360,8 @@ const useVariants = () => {
     handleSelectAll,
     handleGroupSelect,
     handleSubSelect,
+    getGroupPriceDisplay,
+    getGroupInventory
   };
 };
 

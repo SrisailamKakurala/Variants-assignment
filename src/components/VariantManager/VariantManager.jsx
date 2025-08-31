@@ -28,6 +28,8 @@ const VariantManager = () => {
     handleSelectAll,
     handleGroupSelect,
     handleSubSelect,
+    getGroupPriceDisplay,
+    getGroupInventory
   } = useVariants();
 
   return (
@@ -57,6 +59,8 @@ const VariantManager = () => {
         handleSelectAll={handleSelectAll}
         handleGroupSelect={handleGroupSelect}
         handleSubSelect={handleSubSelect}
+        getGroupPriceDisplay={getGroupPriceDisplay}
+        getGroupInventory={getGroupInventory}
       />
       {variants.length === 0 && (
         <Button onClick={addVariant} className="mt-3 font-semibold" variant="default">

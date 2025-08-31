@@ -26,6 +26,8 @@ const VariantList = ({
   handleSelectAll,
   handleGroupSelect,
   handleSubSelect,
+  getGroupPriceDisplay,
+  getGroupInventory,
 }) => {
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedOverItem, setDraggedOverItem] = useState(null);
@@ -155,6 +157,8 @@ const VariantList = ({
   const toggleDropdown = (dropdownName) => {
     setActiveDropdown(prev => (prev === dropdownName ? null : dropdownName));
   };
+
+  const isFlat = Object.keys(grouped).length === 1 && grouped['All'];
 
   return (
     <div className="space-y-3">
@@ -431,19 +435,30 @@ const VariantList = ({
                     </button>
                   </div>
                   <div className="flex items-center gap-3">
+                    {isFlat ? (
+                      <input
+                        type="text"
+                        placeholder="Range"
+                        value={getGroupPriceDisplay(group)}
+                        readOnly
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center bg-gray-100 cursor-not-allowed"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="0.00"
+                        value={subs.length > 0 ? subs[0].price || '' : ''}
+                        onChange={(e) => updatePrice(group, e.target.value, true)}
+                        className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onFocus={(e) => e.target.select()}
+                      />
+                    )}
                     <input
-                      type="text"
-                      value={`₹ ${variants.find(v => v.name === group)?.price?.toFixed(2) || ''}`}
-                      onChange={(e) => updatePrice(group, e.target.value.replace('₹ ', ''))}
-                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      onFocus={(e) => e.target.select()}
-                    />
-                    <input
-                      type="text"
-                      value={variants.find(v => v.name === group)?.inventory || ''}
-                      onChange={(e) => updateInventory(group, e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      onFocus={(e) => e.target.select()}
+                      type="number"
+                      placeholder="0"
+                      value={getGroupInventory(group)}
+                      readOnly
+                      className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center bg-gray-100 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -481,14 +496,16 @@ const VariantList = ({
                           <div className="flex items-center gap-3">
                             <input
                               type="text"
-                              value={`₹ ${sub.price.toFixed(2)}`}
-                              onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
+                              placeholder="0.00"
+                              value={sub.price || ''}
+                              onChange={(e) => updatePrice(sub.name, e.target.value)}
                               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               onFocus={(e) => e.target.select()}
                             />
                             <input
-                              type="text"
-                              value={sub.inventory}
+                              type="number"
+                              placeholder="0"
+                              value={sub.inventory || ''}
                               onChange={(e) => updateInventory(sub.name, e.target.value)}
                               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                               onFocus={(e) => e.target.select()}
