@@ -12,7 +12,7 @@ const useVariants = () => {
     setVariants([...variants, { 
       id: newId, 
       name: '', 
-      values: [{ id: Date.now(), value: '' }] 
+      values: [{ id: Date.now() + 1, value: '' }] 
     }]);
   };
 
@@ -25,7 +25,7 @@ const useVariants = () => {
   const addValue = (variantId) => {
     setVariants(variants.map(v => {
       if (v.id === variantId) {
-        const newValueId = Date.now();
+        const newValueId = Date.now() + Math.random();
         return { 
           ...v, 
           values: [...v.values, { id: newValueId, value: '' }] 
@@ -44,7 +44,7 @@ const useVariants = () => {
         
         const lastValue = updatedValues[updatedValues.length - 1];
         if (lastValue.id === valueId && value && value.trim()) {
-          const newValueId = Date.now();
+          const newValueId = Date.now() + Math.random();
           updatedValues.push({ id: newValueId, value: '' });
         }
         
@@ -60,7 +60,7 @@ const useVariants = () => {
         let filteredValues = v.values.filter(val => val.id !== valueId);
         
         if (filteredValues.length === 0 || filteredValues.every(val => val.value.trim())) {
-          const newValueId = Date.now();
+          const newValueId = Date.now() + Math.random();
           filteredValues.push({ id: newValueId, value: '' });
         }
         
@@ -75,18 +75,22 @@ const useVariants = () => {
   };
 
   const reorderVariants = (sourceIndex, targetIndex) => {
+    if (sourceIndex === targetIndex) return;
+    
     const newVariants = [...variants];
-    const [moved] = newVariants.splice(sourceIndex, 1);
-    newVariants.splice(targetIndex, 0, moved);
+    const [movedVariant] = newVariants.splice(sourceIndex, 1);
+    newVariants.splice(targetIndex, 0, movedVariant);
     setVariants(newVariants);
   };
 
   const reorderValues = (variantId, sourceIndex, targetIndex) => {
+    if (sourceIndex === targetIndex) return;
+    
     setVariants(variants.map(v => {
       if (v.id === variantId) {
         const newValues = [...v.values];
-        const [moved] = newValues.splice(sourceIndex, 1);
-        newValues.splice(targetIndex, 0, moved);
+        const [movedValue] = newValues.splice(sourceIndex, 1);
+        newValues.splice(targetIndex, 0, movedValue);
         return { ...v, values: newValues };
       }
       return v;
@@ -96,15 +100,15 @@ const useVariants = () => {
   const getPermutations = () => {
     if (variants.length === 0) return [];
 
-    const valueLists = variants.map(v => 
+    // Filter variants with valid names and non-empty values
+    const validVariants = variants.filter(v => v.name.trim());
+    const valueLists = validVariants.map(v => 
       v.values
-        .filter(val => val.value && val.value.trim()) // Only include non-empty values
+        .filter(val => val.value && val.value.trim())
         .map(val => val.value.trim())
-    ).filter(list => list.length > 0); // Only include variants with values
+    ).filter(list => list.length > 0);
 
-    const optionNames = variants.map(v => 
-      v.name.trim() || 'Variant ' + (variants.indexOf(v) + 1)
-    );
+    const optionNames = validVariants.map(v => v.name.trim());
 
     if (valueLists.length === 0) return [];
 
@@ -137,6 +141,14 @@ const useVariants = () => {
           newInst[name] = { price: 0.00, inventory: 0 };
         }
       });
+      
+      // Clean up old instances
+      Object.keys(newInst).forEach(name => {
+        if (!currentNames.includes(name)) {
+          delete newInst[name];
+        }
+      });
+      
       return newInst;
     });
   }, [variants]);
@@ -170,15 +182,29 @@ const useVariants = () => {
     const perms = getPermutations();
     if (perms.length === 0) return { 'All': [] };
 
-    if (!groupBy || !variants.some(v => v.name === groupBy)) {
+    // Find the groupBy variant and create hierarchical structure
+    if (!groupBy || !variants.some(v => v.name.trim() === groupBy)) {
       return { 'All': perms };
     }
 
+    const groupIndex = variants.findIndex(v => v.name.trim() === groupBy);
+    if (groupIndex === -1) return { 'All': perms };
+
     const groups = {};
+    
+    // Create hierarchical grouping based on variant order
     perms.forEach(p => {
       const groupValue = p.parts.find(part => part.option === groupBy)?.value || 'Unknown';
+      if (!groupValue || !p.parts.length) return;
+      
       if (!groups[groupValue]) groups[groupValue] = [];
-      groups[groupValue].push(p);
+      
+      // For hierarchical display, create sub-variants from remaining parts
+      const otherParts = p.parts.filter(part => part.option !== groupBy);
+      const subName = otherParts.map(part => part.value).join(' / ') || 'Default';
+      
+      const updatedPerm = { ...p, name: subName };
+      groups[groupValue].push(updatedPerm);
     });
 
     return groups;
@@ -226,16 +252,12 @@ const useVariants = () => {
     if (groupPerms.length === 0) return;
     
     const groupSet = new Set(groupPerms.map(p => p.name));
-    
     setSelectedVariants(prev => {
       const newSet = new Set(prev);
-      const selectedInGroup = [...newSet].filter(n => groupSet.has(n));
-      
-      if (selectedInGroup.length === groupPerms.length && groupPerms.length > 0) {
-        // Unselect all in group
+      const allSelected = groupPerms.every(p => newSet.has(p.name));
+      if (allSelected) {
         groupSet.forEach(n => newSet.delete(n));
       } else {
-        // Select all in group
         groupSet.forEach(n => newSet.add(n));
       }
       return newSet;

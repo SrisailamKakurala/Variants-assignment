@@ -4,3 +4,148 @@
 .roboto {
   font-family: "Roboto", sans-serif;
 }
+
+/* Custom checkbox styles */
+.custom-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 3px;
+  background-color: #fff;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-checkbox:hover {
+  border-color: #9ca3af;
+}
+
+.custom-checkbox:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  ring-offset: 2px;
+}
+
+.custom-checkbox:checked {
+  background-color: #000;
+  border-color: #000;
+}
+
+.custom-checkbox:checked::after {
+  content: '✓';
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Drag and drop visual indicators */
+.drag-preview {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.drop-zone {
+  border: 2px dashed #3b82f6;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.drop-zone-active {
+  border-color: #1d4ed8;
+  background-color: rgba(29, 78, 216, 0.1);
+}
+
+/* Smooth transitions for reordering */
+.variant-item {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.variant-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.95) rotate(2deg);
+}
+
+.variant-item.drop-target {
+  transform: translateY(4px);
+}
+
+/* Value chip styles */
+.value-chip {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.value-chip:hover {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+/* Animation for adding/removing items */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.2s ease-out;
+}
+
+.slide-out {
+  animation: slideOut 0.2s ease-out;
+}
+
+/* Improved focus states */
+.focus-ring:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  ring-offset: 2px;
+}
+
+/* Drag handle styling */
+.drag-handle {
+  cursor: grab;
+  color: #9ca3af;
+  transition: color 0.15s ease;
+}
+
+.drag-handle:hover {
+  color: #6b7280;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}

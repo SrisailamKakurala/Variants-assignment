@@ -17,20 +17,37 @@ const VariantValue = ({
   onDragOver,
   onDrop,
 }) => {
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    if (onDragStart) onDragStart(e);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDragOver) onDragOver(e);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDrop) onDrop(e);
+  };
+
   return (
-    <div>
+    <div className="relative">
       {isDropTarget && !isDragging && (
-        <div className="h-0.5 bg-blue-500 rounded-full mb-2 ml-6 transition-all duration-200"></div>
+        <div className="absolute -top-1 left-0 right-0 h-0.5 bg-blue-500 rounded-full z-10"></div>
       )}
       <div
         className={`flex items-center transition-all duration-200 ${
-          isDragging ? 'opacity-50 scale-95 rotate-1' : ''
+          isDragging ? 'opacity-50 scale-95' : ''
         } ${isDropTarget && !isDragging ? 'transform translate-y-1' : ''}`}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
         <DragHandle 
-          onDragStart={onDragStart} 
+          onDragStart={handleDragStart} 
           onDragEnd={onDragEnd} 
           draggable={!isEmpty} 
         />
