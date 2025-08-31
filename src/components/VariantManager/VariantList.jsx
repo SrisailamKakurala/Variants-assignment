@@ -60,7 +60,9 @@ const VariantList = ({
   const allExpanded = Object.keys(grouped).length > 0 && Object.keys(grouped).every(g => expandedGroups.has(g));
   const toggleAll = allExpanded ? collapseAll : expandAll;
 
-  const hasValidVariants = variants.some(variant => variant.name.trim() !== '' || variant.values.some(val => val.value.trim() !== ''));
+  const hasValidVariants = variants.some(variant => 
+    variant.name.trim() !== '' && variant.values.some(val => val.value.trim() !== '')
+  );
 
   return (
     <div className="space-y-3">
@@ -88,87 +90,122 @@ const VariantList = ({
           </Button>
         </div>
       )}
-      {variants.length > 0 && hasValidVariants && (
+      {hasValidVariants && (
         <div>
-          <div className="flex justify-between items-center mb-2 border-t-[1px] border-slate-200 py-5">
-            <div className="flex items-center">
-              <label className="mr-2 text-sm font-medium text-gray-700">Group by</label>
-              <select value={groupBy} onChange={(e) => setGroupBy(e.target.value)} className="border rounded-md px-2 py-1 text-sm">
-                {variants.map(v => (
-                  <option key={v.id} value={v.name}>{v.name || 'Variant ' + (variants.indexOf(v) + 1)}</option>
+          <div className="flex justify-between items-center mb-4 border-t border-gray-200 pt-6">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Group by</label>
+              <select 
+                value={groupBy} 
+                onChange={(e) => setGroupBy(e.target.value)} 
+                className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {variants.filter(v => v.name.trim()).map(v => (
+                  <option key={v.id} value={v.name}>{v.name}</option>
                 ))}
               </select>
             </div>
-            <div className="flex items-center">
-              <Search size={16} className="mr-2 text-gray-400" />
-              <input type="text" placeholder="Search" className="border rounded-md px-2 py-1 text-sm w-32" />
-            </div>
-          </div>
-          <div className="flex justify-between items-center mb-6 text-sm font-medium text-gray-700 ">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                className="mr-2 custom-checkbox"
-                checked={selectedVariants.size === (getGroupedVariants()['All'] || []).length}
-                onChange={handleSelectAll}
-              />
-              Variant{selectedVariants.size > 0 ? ` (${selectedVariants.size})` : ''}
-            </div>
-            <button onClick={toggleAll} className="text-blue-500">
-              {allExpanded ? 'Collapse all' : 'Expand all'}
-            </button>
-            <div>Price</div>
-            <div>Available</div>
-          </div>
-          {Object.entries(grouped).map(([group, subs]) => (
-            <div key={group}>
-              <div className="flex items-center mb-2">
-                <input
-                  type="checkbox"
-                  className="mr-2 custom-checkbox"
-                  checked={subs.every(sub => selectedVariants.has(sub.name))}
-                  onChange={() => handleGroupSelect(group)}
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search" 
+                  className="border border-gray-300 rounded-lg pl-9 pr-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-48" 
                 />
-                <div className="w-8 h-8 hover:border-2 hover:border-dashed cursor-pointer rounded flex items-center justify-center mr-2">
-                  <ImagePlus size={16} className="text-blue-500" />
-                </div>
-                <button onClick={() => toggleGroup(group)} className="flex items-center">
-                  {expandedGroups.has(group) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  <span className="ml-1">{group}</span>
-                  <span className="ml-1 text-gray-500">{subs.length} variant{subs.length > 1 ? 's' : ''}</span>
-                </button>
               </div>
-              {expandedGroups.has(group) && subs.map(sub => (
-                <div key={sub.name} className="flex items-center ml-10 mb-2">
-                  <input
-                    type="checkbox"
-                    className="mr-2 custom-checkbox"
-                    checked={selectedVariants.has(sub.name)}
-                    onChange={() => handleSubSelect(sub.name)}
-                  />
-                  <div className="w-8 h-8 hover:border-2 hover:border-dashed cursor-pointer rounded flex items-center justify-center mr-2">
-                    <ImagePlus size={16} className="text-blue-500" />
-                  </div>
-                  <span className="flex-1">{sub.name}</span>
-                  <input
-                    type="text"
-                    value={`₹ ${sub.price.toFixed(2)}`}
-                    onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
-                    className="border rounded-md px-2 py-1 text-sm w-24 mr-4"
-                    onFocus={(e) => e.target.select()}
-                  />
-                  <input
-                    type="text"
-                    value={sub.inventory}
-                    onChange={(e) => updateInventory(sub.name, e.target.value)}
-                    className="border rounded-md px-2 py-1 text-sm w-20"
-                    onFocus={(e) => e.target.select()}
-                  />
-                </div>
-              ))}
+              <button className="p-2 hover:bg-gray-100 rounded-lg">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+              </button>
             </div>
-          ))}
-          <p className="text-sm text-center text-gray-500 mt-4">Total inventory at Shop location: {totalInventory} available</p>
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="bg-black text-white px-2 py-1 rounded text-xs font-medium">
+                  {selectedVariants.size} selected
+                </div>
+              </div>
+              <button className="p-1 hover:bg-gray-200 rounded">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="1"/>
+                  <circle cx="19" cy="12" r="1"/>
+                  <circle cx="5" cy="12" r="1"/>
+                </svg>
+              </button>
+            </div>
+            
+            {Object.entries(grouped).map(([group, subs]) => (
+              <div key={group} className="mb-4 last:mb-0">
+                <div className="flex items-center justify-between bg-white rounded-lg p-3 mb-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      className="custom-checkbox"
+                      checked={subs.length > 0 && subs.every(sub => selectedVariants.has(sub.name))}
+                      onChange={() => handleGroupSelect(group)}
+                    />
+                    <div className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center">
+                      <ImagePlus size={16} className="text-blue-500" />
+                    </div>
+                    <button onClick={() => toggleGroup(group)} className="flex items-center gap-2 text-left">
+                      {expandedGroups.has(group) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      <span className="font-medium">{group}</span>
+                      <span className="text-gray-500 text-sm">{subs.length} variant{subs.length > 1 ? 's' : ''}</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-6 text-sm font-medium text-gray-700">
+                    <div className="w-24 text-center">Price</div>
+                    <div className="w-20 text-center">Available</div>
+                  </div>
+                </div>
+                
+                {expandedGroups.has(group) && (
+                  <div className="ml-6 space-y-2">
+                    {subs.map(sub => (
+                      <div key={sub.name} className="flex items-center justify-between bg-white rounded-lg p-3">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            className="custom-checkbox"
+                            checked={selectedVariants.has(sub.name)}
+                            onChange={() => handleSubSelect(sub.name)}
+                          />
+                          <div className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center">
+                            <ImagePlus size={16} className="text-blue-500" />
+                          </div>
+                          <span className="font-medium">{sub.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="text"
+                            value={`₹ ${sub.price.toFixed(2)}`}
+                            onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
+                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onFocus={(e) => e.target.select()}
+                          />
+                          <input
+                            type="text"
+                            value={sub.inventory}
+                            onChange={(e) => updateInventory(sub.name, e.target.value)}
+                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onFocus={(e) => e.target.select()}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <p className="text-sm text-center text-gray-500">Total inventory at Shop location: {totalInventory} available</p>
         </div>
       )}
     </div>
@@ -181,24 +218,29 @@ const styles = `
     appearance: none;
     width: 16px;
     height: 16px;
-    border: 1px solid #7D7D7D;
-    border-radius: 2px;
+    border: 2px solid #d1d5db;
+    border-radius: 3px;
     background-color: #fff;
     cursor: pointer;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
+  }
+  .custom-checkbox:hover {
+    border-color: #9ca3af;
   }
   .custom-checkbox:checked {
     background-color: #000;
-    border-color: #fff;
+    border-color: #000;
   }
   .custom-checkbox:checked::after {
     content: '✓';
     color: #fff;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: bold;
+    line-height: 1;
   }
 `;
 

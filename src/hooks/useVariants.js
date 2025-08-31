@@ -158,9 +158,11 @@ const useVariants = () => {
   };
 
   useEffect(() => {
-    if (variants.length > 0 && !variants.some(v => v.name === groupBy)) {
-      const firstVariantWithName = variants.find(v => v.name.trim());
-      setGroupBy(firstVariantWithName ? firstVariantWithName.name : '');
+    if (variants.length > 0) {
+      const validVariants = variants.filter(v => v.name.trim());
+      if (validVariants.length > 0 && (!groupBy || !validVariants.some(v => v.name === groupBy))) {
+        setGroupBy(validVariants[0].name);
+      }
     }
   }, [variants, groupBy]);
 
@@ -209,7 +211,9 @@ const useVariants = () => {
 
   const handleSelectAll = () => {
     const allPerms = Object.values(getGroupedVariants()).flat();
-    if (selectedVariants.size === allPerms.length) {
+    if (allPerms.length === 0) return;
+    
+    if (selectedVariants.size === allPerms.length && allPerms.length > 0) {
       setSelectedVariants(new Set());
     } else {
       const newSelected = new Set(allPerms.map(p => p.name));
@@ -219,13 +223,15 @@ const useVariants = () => {
 
   const handleGroupSelect = (group) => {
     const groupPerms = getGroupedVariants()[group] || [];
+    if (groupPerms.length === 0) return;
+    
     const groupSet = new Set(groupPerms.map(p => p.name));
     
     setSelectedVariants(prev => {
       const newSet = new Set(prev);
       const selectedInGroup = [...newSet].filter(n => groupSet.has(n));
       
-      if (selectedInGroup.length === groupPerms.length) {
+      if (selectedInGroup.length === groupPerms.length && groupPerms.length > 0) {
         // Unselect all in group
         groupSet.forEach(n => newSet.delete(n));
       } else {
