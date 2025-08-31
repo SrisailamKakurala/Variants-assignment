@@ -10,15 +10,15 @@ const useVariants = () => {
 
   const addVariant = () => {
     const newId = Date.now();
-    setVariants([...variants, { 
-      id: newId, 
-      name: '', 
-      values: [{ id: Date.now() + 1, value: '' }] 
+    setVariants([...variants, {
+      id: newId,
+      name: '',
+      values: [{ id: Date.now() + 1, value: '' }]
     }]);
   };
 
   const updateName = (id, name) => {
-    setVariants(variants.map(v => 
+    setVariants(variants.map(v =>
       v.id === id ? { ...v, name: name || '' } : v
     ));
   };
@@ -27,9 +27,9 @@ const useVariants = () => {
     setVariants(variants.map(v => {
       if (v.id === variantId) {
         const newValueId = Date.now() + Math.random();
-        return { 
-          ...v, 
-          values: [...v.values, { id: newValueId, value: '' }] 
+        return {
+          ...v,
+          values: [...v.values, { id: newValueId, value: '' }]
         };
       }
       return v;
@@ -39,16 +39,16 @@ const useVariants = () => {
   const updateValue = (variantId, valueId, value) => {
     setVariants(variants.map(v => {
       if (v.id === variantId) {
-        const updatedValues = v.values.map(val => 
+        const updatedValues = v.values.map(val =>
           val.id === valueId ? { ...val, value: value || '' } : val
         );
-        
+
         const lastValue = updatedValues[updatedValues.length - 1];
         if (lastValue.id === valueId && value && value.trim()) {
           const newValueId = Date.now() + Math.random();
           updatedValues.push({ id: newValueId, value: '' });
         }
-        
+
         return { ...v, values: updatedValues };
       }
       return v;
@@ -59,12 +59,12 @@ const useVariants = () => {
     setVariants(variants.map(v => {
       if (v.id === variantId) {
         let filteredValues = v.values.filter(val => val.id !== valueId);
-        
+
         if (filteredValues.length === 0 || filteredValues.every(val => val.value.trim())) {
           const newValueId = Date.now() + Math.random();
           filteredValues.push({ id: newValueId, value: '' });
         }
-        
+
         return { ...v, values: filteredValues };
       }
       return v;
@@ -77,7 +77,7 @@ const useVariants = () => {
 
   const reorderVariants = (sourceIndex, targetIndex) => {
     if (sourceIndex === targetIndex) return;
-    
+
     const newVariants = [...variants];
     const [movedVariant] = newVariants.splice(sourceIndex, 1);
     newVariants.splice(targetIndex, 0, movedVariant);
@@ -86,7 +86,7 @@ const useVariants = () => {
 
   const reorderValues = (variantId, sourceIndex, targetIndex) => {
     if (sourceIndex === targetIndex) return;
-    
+
     setVariants(variants.map(v => {
       if (v.id === variantId) {
         const newValues = [...v.values];
@@ -103,7 +103,7 @@ const useVariants = () => {
 
     // Filter variants with valid names and non-empty values
     const validVariants = variants.filter(v => v.name.trim());
-    const valueLists = validVariants.map(v => 
+    const valueLists = validVariants.map(v =>
       v.values
         .filter(val => val.value && val.value.trim())
         .map(val => val.value.trim())
@@ -113,18 +113,18 @@ const useVariants = () => {
 
     if (valueLists.length === 0) return [];
 
-    const cartesianProduct = (...arrays) => 
-      arrays.reduce((acc, arr) => 
+    const cartesianProduct = (...arrays) =>
+      arrays.reduce((acc, arr) =>
         acc.flatMap(a => arr.map(b => [...a, b])), [[]]
       );
 
     const combos = cartesianProduct(...valueLists);
-    
+
     return combos.map(combo => {
       const name = combo.join(' / ');
-      const parts = optionNames.map((opt, i) => ({ 
-        option: opt, 
-        value: combo[i] || '' 
+      const parts = optionNames.map((opt, i) => ({
+        option: opt,
+        value: combo[i] || ''
       }));
       const instance = variantInstances[name] || { price: 0.00, inventory: 0 };
       return { name, parts, ...instance };
@@ -134,7 +134,7 @@ const useVariants = () => {
   useEffect(() => {
     const permutations = getPermutations();
     const currentNames = permutations.map(p => p.name);
-    
+
     setVariantInstances(prev => {
       const newInst = { ...prev };
       currentNames.forEach(name => {
@@ -142,14 +142,14 @@ const useVariants = () => {
           newInst[name] = { price: 0.00, inventory: 0 };
         }
       });
-      
+
       // Clean up old instances
       Object.keys(newInst).forEach(name => {
         if (!currentNames.includes(name)) {
           delete newInst[name];
         }
       });
-      
+
       return newInst;
     });
   }, [variants]);
@@ -180,36 +180,50 @@ const useVariants = () => {
   }, [variants, groupBy]);
 
   const getGroupedVariants = () => {
-    const perms = getPermutations();
-    if (perms.length === 0) return { 'All': [] };
+  const perms = getPermutations();
+  if (perms.length === 0) return { 'All': [] };
 
-    // Find the groupBy variant and create hierarchical structure
-    if (!groupBy || !variants.some(v => v.name.trim() === groupBy)) {
-      return { 'All': perms };
-    }
+  const validVariants = variants.filter(v => v.name.trim());
 
-    const groupIndex = variants.findIndex(v => v.name.trim() === groupBy);
-    if (groupIndex === -1) return { 'All': perms };
+  // ✅ Case 1: Only ONE variant → return flat list (no nesting, no groups)
+  if (validVariants.length === 1) {
+    return {
+      All: perms.map(p => ({
+        ...p,
+        name: p.parts[0].value, // just show value (e.g., "SM")
+      })),
+    };
+  }
 
-    const groups = {};
-    
-    // Create hierarchical grouping based on variant order
-    perms.forEach(p => {
-      const groupValue = p.parts.find(part => part.option === groupBy)?.value || 'Unknown';
-      if (!groupValue || !p.parts.length) return;
-      
-      if (!groups[groupValue]) groups[groupValue] = [];
-      
-      // For hierarchical display, create sub-variants from remaining parts
-      const otherParts = p.parts.filter(part => part.option !== groupBy);
-      const subName = otherParts.map(part => part.value).join(' / ') || 'Default';
-      
-      const updatedPerm = { ...p, name: subName };
-      groups[groupValue].push(updatedPerm);
-    });
+  // ✅ Case 2: Multiple variants → normal grouping
+  if (!groupBy || !variants.some(v => v.name.trim() === groupBy)) {
+    return { 'All': perms };
+  }
 
-    return groups;
-  };
+  const groupIndex = variants.findIndex(v => v.name.trim() === groupBy);
+  if (groupIndex === -1) return { 'All': perms };
+
+  const groups = {};
+  perms.forEach(p => {
+    const groupValue = p.parts.find(part => part.option === groupBy)?.value || 'Unknown';
+    if (!groupValue) return;
+
+    if (!groups[groupValue]) groups[groupValue] = [];
+
+    const otherParts = p.parts.filter(part => part.option !== groupBy);
+    const subName = otherParts.map(part => part.value).join(' / ');
+
+    // 🔥 If no other parts, just use the group value
+    const finalName = subName || groupValue;
+
+    groups[groupValue].push({ ...p, name: finalName });
+  });
+
+  return groups;
+};
+
+
+
 
   useEffect(() => {
     const groups = Object.keys(getGroupedVariants());
@@ -239,7 +253,7 @@ const useVariants = () => {
   const handleSelectAll = () => {
     const allPerms = Object.values(getGroupedVariants()).flat();
     if (allPerms.length === 0) return;
-    
+
     if (selectedVariants.size === allPerms.length && allPerms.length > 0) {
       setSelectedVariants(new Set());
     } else {
@@ -251,7 +265,7 @@ const useVariants = () => {
   const handleGroupSelect = (group) => {
     const groupPerms = getGroupedVariants()[group] || [];
     if (groupPerms.length === 0) return;
-    
+
     const groupSet = new Set(groupPerms.map(p => p.name));
     setSelectedVariants(prev => {
       const newSet = new Set(prev);
