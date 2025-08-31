@@ -226,45 +226,53 @@ const VariantList = ({
                 
                 {expandedGroups.has(group) && (
                   <div className="ml-6 space-y-2">
-                    {subs.map(sub => (
-                      <div key={sub.name} className="flex items-center justify-between bg-white rounded-lg p-3">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            className="custom-checkbox"
-                            checked={selectedVariants.has(sub.name)}
-                            onChange={() => handleSubSelect(sub.name)}
-                          />
-                          <div 
-                            className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center"
-                            onClick={() => triggerFileInput(`${group}-${sub.name}`)}
-                          >
-                            {imageUrls[`${group}-${sub.name}`] ? (
-                              <img src={imageUrls[`${group}-${sub.name}`]} alt="Sub-Variant" className="w-full h-full object-cover rounded" />
-                            ) : (
-                              <ImagePlus size={16} className="text-blue-500" />
-                            )}
+                    {subs.map(sub => {
+                      const subVariantKey = `${group}-${sub.name}`;
+                      const subHasImage = imageUrls[subVariantKey];
+                      const inheritedImage = !subHasImage && imageUrls[group];
+
+                      return (
+                        <div key={sub.name} className="flex items-center justify-between bg-white rounded-lg p-3">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              className="custom-checkbox"
+                              checked={selectedVariants.has(sub.name)}
+                              onChange={() => handleSubSelect(sub.name)}
+                            />
+                            <div 
+                              className="w-8 h-8 border border-dashed border-gray-300 hover:border-blue-500 cursor-pointer rounded flex items-center justify-center"
+                              onClick={() => triggerFileInput(subVariantKey)}
+                            >
+                              {subHasImage ? (
+                                <img src={imageUrls[subVariantKey]} alt="Sub-Variant" className="w-full h-full object-cover rounded" />
+                              ) : inheritedImage ? (
+                                <img src={imageUrls[group]} alt="Inherited Variant" className="w-full h-full object-cover rounded" />
+                              ) : (
+                                <ImagePlus size={16} className="text-blue-500" />
+                              )}
+                            </div>
+                            <span className="font-medium">{sub.name}</span>
                           </div>
-                          <span className="font-medium">{sub.name}</span>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="text"
+                              value={`₹ ${sub.price.toFixed(2)}`}
+                              onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
+                              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              onFocus={(e) => e.target.select()}
+                            />
+                            <input
+                              type="text"
+                              value={sub.inventory}
+                              onChange={(e) => updateInventory(sub.name, e.target.value)}
+                              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              onFocus={(e) => e.target.select()}
+                            />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="text"
-                            value={`₹ ${sub.price.toFixed(2)}`}
-                            onChange={(e) => updatePrice(sub.name, e.target.value.replace('₹ ', ''))}
-                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-24 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            onFocus={(e) => e.target.select()}
-                          />
-                          <input
-                            type="text"
-                            value={sub.inventory}
-                            onChange={(e) => updateInventory(sub.name, e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-20 text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            onFocus={(e) => e.target.select()}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

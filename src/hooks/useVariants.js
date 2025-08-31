@@ -6,6 +6,7 @@ const useVariants = () => {
   const [groupBy, setGroupBy] = useState('');
   const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [selectedVariants, setSelectedVariants] = useState(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
 
   const addVariant = () => {
     const newId = Date.now();
