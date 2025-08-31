@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import VariantOption from './VariantOption';
-import { ChevronDown, ChevronRight, PlusCircle, Search, ImagePlus } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlusCircle, Search, ImagePlus, ListFilterIcon } from 'lucide-react';
 import Button from '../UI/Button';
 
 const VariantList = ({
@@ -32,6 +32,7 @@ const VariantList = ({
   const [imageUrls, setImageUrls] = useState({});
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   const handleVariantDragStart = (e, variantId) => {
     const variantIndex = variants.findIndex(v => v.id === variantId);
@@ -148,30 +149,56 @@ const VariantList = ({
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-4 border-t-1 border-gray-200 pt-6">
-        <div className="">
-          Group by 
-          <select
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm ml-2"
-          >
-            {uniqueVariantNames.map(name => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
+      {hasValidVariants && (
+        <div className="flex justify-between items-center mb-4 border-t-1 border-gray-200 pt-6">
+          <div>
+            Group by
+            <select
+              value={groupBy}
+              onChange={(e) => setGroupBy(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm ml-2"
+            >
+              {uniqueVariantNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            {showSearch && (
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-40 pr-8"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setShowSearch(false);
+                  }}
+                  className="absolute right-2 text-gray-500 hover:text-gray-700"
+                  title="Close"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setShowSearch(prev => !prev)}
+              className="p-2 hover:bg-gray-100 rounded"
+              title="Search"
+            >
+              <div className="flex gap-2 cursor-pointer">
+                <Search size={16} />
+                <ListFilterIcon size={16} />
+              </div>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-40"
-          />
-          <Search size={16} />
-        </div>
-      </div>
+      )}
 
       {hasValidVariants && (
         <div>
@@ -185,16 +212,10 @@ const VariantList = ({
               />
               <span className="text-sm text-gray-700">Variant</span>
               <button
-                onClick={collapseAll}
-                className="text-sm text-blue-600 hover:text-blue-700 ml-2"
+                onClick={toggleAll}
+                className="text-sm text-blue-600 hover:text-blue-700 ml-2 cursor-pointer"
               >
-                Collapse all
-              </button>
-              <button
-                onClick={expandAll}
-                className="text-sm text-blue-600 hover:text-blue-700 ml-2"
-              >
-                Expand all
+                {allExpanded ? "Collapse all" : "Expand all"}
               </button>
             </div>
 
