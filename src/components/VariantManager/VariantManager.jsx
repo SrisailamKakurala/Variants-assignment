@@ -2,7 +2,7 @@
 
 import { PlusCircle } from "lucide-react";
 import Button from "../UI/Button";
-import VariantList from "./VariantList";
+import VariantList from "./VariantListDir/VariantList";
 import useVariants from "../../hooks/useVariants";
 
 const VariantManager = () => {
@@ -33,6 +33,9 @@ const VariantManager = () => {
     handleSubSelect,
     getGroupPriceDisplay,
     getGroupInventory,
+    searchTerm,
+    setSearchTerm,
+    filters,
   } = useVariants();
 
   return (
@@ -65,6 +68,9 @@ const VariantManager = () => {
         handleSubSelect={handleSubSelect}
         getGroupPriceDisplay={getGroupPriceDisplay}
         getGroupInventory={getGroupInventory}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filters={filters}
       />
       {variants.length === 0 && (
         <Button onClick={addVariant} className="mt-3 font-semibold" variant="default">
