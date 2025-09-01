@@ -24,6 +24,7 @@ const VariantList = ({
   updateInventory,
   selectedVariants,
   handleSelectAll,
+  handleUnSelectAll,
   handleGroupSelect,
   handleSubSelect,
   getGroupPriceDisplay,
@@ -109,7 +110,7 @@ const VariantList = ({
 
   const handleSelectAllToggle = () => {
     if (selectedVariants.size === variants.length) {
-      handleSelectAll(false);
+      handleUnSelectAll(true);
     } else {
       handleSelectAll(true);
     }
@@ -416,7 +417,7 @@ const VariantList = ({
                     <input
                       type="checkbox"
                       className="custom-checkbox"
-                      checked={subs.length > 0 && subs.every(sub => selectedVariants.has(sub.name))}
+                      checked={subs.length > 0 && subs.every(sub => selectedVariants.has(sub.originalName))}
                       onChange={() => handleGroupSelect(group)}
                     />
                     <div
@@ -478,7 +479,7 @@ const VariantList = ({
                             <input
                               type="checkbox"
                               className="custom-checkbox"
-                              checked={selectedVariants.has(sub.name)}
+                              checked={selectedVariants.has(sub.originalName)}
                               onChange={() => handleSubSelect(sub.originalName)}
                             />
                             <div

@@ -26,6 +26,7 @@ const VariantManager = () => {
     totalInventory,
     selectedVariants,
     handleSelectAll,
+    handleUnSelectAll,
     handleGroupSelect,
     handleSubSelect,
     getGroupPriceDisplay,
@@ -57,6 +58,7 @@ const VariantManager = () => {
         totalInventory={totalInventory}
         selectedVariants={selectedVariants}
         handleSelectAll={handleSelectAll}
+        handleUnSelectAll={handleUnSelectAll}
         handleGroupSelect={handleGroupSelect}
         handleSubSelect={handleSubSelect}
         getGroupPriceDisplay={getGroupPriceDisplay}

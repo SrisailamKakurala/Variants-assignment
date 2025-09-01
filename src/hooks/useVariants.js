@@ -318,17 +318,24 @@ const useVariants = () => {
   };
 
   const handleGroupSelect = (group) => {
+    console.log(group);
     const groupPerms = getGroupedVariants()[group] || [];
     if (groupPerms.length === 0) return;
 
-    const groupSet = new Set(groupPerms.map(p => p.name));
+    console.log(groupPerms);
+
+    const groupSet = new Set(groupPerms.map(p => p.originalName)); // Use originalName
+    console.log(groupSet);
+
     setSelectedVariants(prev => {
       const newSet = new Set(prev);
-      const allSelected = groupPerms.every(p => newSet.has(p.name));
-      if (allSelected) {
-        groupSet.forEach(n => newSet.delete(n));
+      const selectedInGroup = groupPerms.filter(p => newSet.has(p.originalName)).length; // Count selected in group
+
+      console.log(selectedInGroup);
+      if (selectedInGroup > 0) {
+        groupSet.forEach(n => newSet.delete(n)); // Uncheck all sub-variants if any are selected
       } else {
-        groupSet.forEach(n => newSet.add(n));
+        groupPerms.forEach(p => newSet.add(p.originalName)); // Select all sub-variants
       }
       return newSet;
     });
@@ -371,6 +378,7 @@ const useVariants = () => {
     totalInventory,
     selectedVariants,
     handleSelectAll,
+    handleUnSelectAll,
     handleGroupSelect,
     handleSubSelect,
     getGroupPriceDisplay,
