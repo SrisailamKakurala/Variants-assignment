@@ -129,6 +129,7 @@ const VariantList = ({
   const grouped = getGroupedVariants();
   const allExpanded = Object.keys(grouped).length > 0 && Object.keys(grouped).every(g => expandedGroups.has(g));
 
+  // Updated filteredGrouped to show all sub-variants when group name matches searchTerm
   const filteredGrouped = Object.fromEntries(
     Object.entries(grouped).map(([group, subs]) => {
       const matchesFilters = Object.entries(filters).every(([filterName, filterValue]) => {
@@ -137,7 +138,20 @@ const VariantList = ({
         const subMatches = subs.some(sub => sub.name.toLowerCase().includes(filterValue.toLowerCase()));
         return groupMatches || subMatches;
       });
-      return matchesFilters ? [group, subs] : null;
+
+      // Use all subs if group name matches searchTerm, otherwise filter subs
+      const filteredSubs = group.toLowerCase().includes(searchTerm.toLowerCase()) 
+        ? subs // Include all sub-variants if group name matches
+        : subs.filter(sub => 
+            !searchTerm || sub.name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+
+      // Include group if its name matches searchTerm or it has matching sub-variants
+      const searchMatches = !searchTerm || 
+        group.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        filteredSubs.length > 0;
+
+      return (matchesFilters && searchMatches) ? [group, filteredSubs] : null;
     }).filter(Boolean)
   );
 
@@ -200,8 +214,8 @@ const VariantList = ({
             toggleAll={handleToggleAll}
             allExpanded={allExpanded}
             handleUnSelectAll={handleUnSelectAll}
-            expandAll={expandAll} // Pass for completeness
-            collapseAll={collapseAll} // Pass for completeness
+            expandAll={expandAll}
+            collapseAll={collapseAll}
           />
           <GroupedVariantsSection
             filteredGrouped={filteredGrouped}

@@ -18,10 +18,9 @@ const GroupedVariantsSection = ({
   triggerFileInput,
   searchTerm,
 }) => {
-
   useEffect(() => {
     console.log('searchTerm: ' + searchTerm);
-  }, [searchTerm])
+  }, [searchTerm]);
   return (
     <div className="bg-white px-4 py-0 rounded-lg mb-4">
       {Object.entries(filteredGrouped).map(([group, subs]) => (
