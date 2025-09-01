@@ -155,6 +155,7 @@ const useVariants = () => {
   }, [variants]);
 
   const updatePrice = (name, price, isGroup = false) => {
+    console.log(name, price, isGroup);
     const parsedPrice = parseFloat(price) || 0;
 
     if (isGroup) {
@@ -177,20 +178,21 @@ const useVariants = () => {
   };
 
   const updateInventory = (name, inventory) => {
+    // console.log(name, inventory);
     const parsedInventory = parseInt(inventory) || 0;
-    console.log(parsedInventory);
+    // console.log(parsedInventory);
     // Update individual sub-variant inventory
     setVariantInstances(prev => ({
       ...prev,
       [name]: { ...prev[name], inventory: parsedInventory }
     }));
-    console.log(variantInstances);
+    // console.log(variantInstances);
   };
 
   const getGroupPriceDisplay = (groupName) => {
     const grouped = getGroupedVariants();
     const groupSubs = grouped[groupName] || [];
-    
+
     if (groupSubs.length === 0) return '';
 
     const prices = groupSubs.map(sub => sub.price || 0).filter(p => p > 0);
@@ -199,7 +201,7 @@ const useVariants = () => {
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
 
-    return minPrice === maxPrice ? minPrice.toString() : `${minPrice} - ${maxPrice}`;
+    return minPrice === maxPrice ? minPrice.toFixed(2) : `${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}`;
   };
 
   const getGroupInventory = (groupName) => {
@@ -257,8 +259,8 @@ const useVariants = () => {
 
       const finalName = subName || groupValue;
 
-      groups[groupValue].push({ 
-        ...p, 
+      groups[groupValue].push({
+        ...p,
         name: finalName,
         originalName: p.name
       });
@@ -296,12 +298,23 @@ const useVariants = () => {
     const allPerms = Object.values(getGroupedVariants()).flat();
     if (allPerms.length === 0) return;
 
+    console.log(allPerms)
+
     if (selectedVariants.size === allPerms.length && allPerms.length > 0) {
       setSelectedVariants(new Set());
     } else {
       const newSelected = new Set(allPerms.map(p => p.name));
       setSelectedVariants(newSelected);
     }
+  };
+
+  const handleUnSelectAll = () => {
+    const allPerms = Object.values(getGroupedVariants()).flat();
+    if (allPerms.length === 0) return;
+
+    console.log(allPerms);
+
+    setSelectedVariants(new Set()); // Always unselect all by setting to an empty Set
   };
 
   const handleGroupSelect = (group) => {
@@ -361,7 +374,7 @@ const useVariants = () => {
     handleGroupSelect,
     handleSubSelect,
     getGroupPriceDisplay,
-    getGroupInventory
+    getGroupInventory,
   };
 };
 

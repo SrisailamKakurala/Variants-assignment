@@ -29,7 +29,7 @@ const VariantManager = () => {
     handleGroupSelect,
     handleSubSelect,
     getGroupPriceDisplay,
-    getGroupInventory
+    getGroupInventory,
   } = useVariants();
 
   return (
