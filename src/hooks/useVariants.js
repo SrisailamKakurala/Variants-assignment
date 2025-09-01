@@ -1,3 +1,5 @@
+// useVariants.js
+
 import { useState, useEffect } from 'react';
 
 const useVariants = () => {

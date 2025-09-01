@@ -1,3 +1,5 @@
+// VariantOption.jsx
+
 import React, { useState } from 'react';
 import VariantValue from './VariantValue';
 import Input from '../UI/Input';

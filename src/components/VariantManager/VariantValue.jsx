@@ -1,3 +1,5 @@
+// VariantValue.jsx
+
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import DragHandle from './DragHandle';

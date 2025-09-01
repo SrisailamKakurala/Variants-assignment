@@ -1,3 +1,5 @@
+// VariantManager.jsx
+
 import { PlusCircle } from "lucide-react";
 import Button from "../UI/Button";
 import VariantList from "./VariantList";

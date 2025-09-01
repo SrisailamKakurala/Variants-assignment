@@ -1,3 +1,5 @@
+// VariantList.jsx
+
 import React, { useState, useRef, useEffect } from 'react';
 import VariantOption from './VariantOption';
 import { ChevronDown, ChevronRight, PlusCircle, ImagePlus, X, Search, ListFilter, LucideMoreHorizontal } from 'lucide-react';

@@ -1,3 +1,5 @@
+// DragHandle.jsx
+
 import React from 'react';
 
 const DragHandle = ({ onDragStart, onDragEnd, draggable = true }) => (
