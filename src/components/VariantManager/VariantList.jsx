@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import VariantOption from './VariantOption';
-import { ChevronDown, ChevronRight, PlusCircle, ImagePlus, X, Search, ListFilter } from 'lucide-react';
+import { ChevronDown, ChevronRight, PlusCircle, ImagePlus, X, Search, ListFilter, LucideMoreHorizontal } from 'lucide-react';
 import Button from '../UI/Button';
 
 const VariantList = ({
@@ -283,7 +283,6 @@ const VariantList = ({
                   {Object.entries(filters).map(([variantName, value]) => (
                     <div key={`${variantName}-${value}`} className="relative">
                       <button
-                        onClick={() => toggleDropdown(variantName)}
                         className="flex items-center justify-center bg-white border border-gray-100 shadow rounded-full px-2 py-1 text-sm"
                       >
                         <span>{`${variantName} ${value}`}</span>
@@ -297,35 +296,6 @@ const VariantList = ({
                           <X size={12} />
                         </button>
                       </button>
-                      {activeDropdown === variantName && (
-                        <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg">
-                          <div className="p-2">
-                            {[...new Set(variants
-                              .filter(v => v.name === variantName)
-                              .flatMap(v => v.values.map(val => val.value))
-                              .filter(val => val.trim() !== ''))]
-                              .map(value => (
-                                <label key={value} className="block px-2 py-1 hover:bg-gray-100 cursor-pointer">
-                                  <input
-                                    type="radio"
-                                    name={`filter-${variantName}`}
-                                    value={value}
-                                    checked={filters[variantName] === value}
-                                    onChange={() => handleFilterChange(variantName, value)}
-                                    className="mr-2"
-                                  />
-                                  {value}
-                                </label>
-                              ))}
-                            <button
-                              onClick={() => handleClearFilter(variantName)}
-                              className="w-full text-blue-600 hover:text-blue-700 text-sm mt-1"
-                            >
-                              Clear
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ))}
                   <button
@@ -388,24 +358,60 @@ const VariantList = ({
 
           <div className="flex justify-between items-center mb-4 border-y-1 border-gray-200 py-3 px-2 bg-gray-50">
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="custom-checkbox"
-                checked={selectedVariants.size === variants.length}
-                onChange={handleSelectAllToggle}
-              />
-              <span className="text-sm text-gray-700">Variant</span>
-              <button
-                onClick={toggleAll}
-                className="text-sm text-blue-600 hover:text-blue-700 ml-2 cursor-pointer"
-              >
-                {allExpanded ? "Collapse all" : "Expand all"}
-              </button>
+              {selectedVariants.size > 0 ? (
+                <>
+                  <input
+                    type="checkbox"
+                    className="custom-checkbox"
+                    checked={true}
+                    onChange={() => {
+                      handleUnSelectAll();
+                      // Revert to original headers
+                    }}
+                  />
+                  <span className="text-sm text-gray-600 font-semibold">{selectedVariants.size} items selected</span>
+                  <style>
+                    {`
+                      .custom-checkbox:checked::after {
+                        content: '-';
+                        color: #fff;
+                        font-size: 10px;
+                        font-weight: 800;
+                        line-height: 0;
+                      }
+                    `}
+                  </style>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="checkbox"
+                    className="custom-checkbox"
+                    checked={selectedVariants.size === variants.length}
+                    onChange={handleSelectAllToggle}
+                  />
+                  <span className="text-sm text-gray-700">Variant</span>
+                  <button
+                    onClick={toggleAll}
+                    className="text-sm text-blue-600 hover:text-blue-700 ml-2 cursor-pointer"
+                  >
+                    {allExpanded ? "Collapse all" : "Expand all"}
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-6 text-sm font-medium text-gray-700">
-              <div className="w-24 text-center">Price</div>
-              <div className="w-20 text-center">Available</div>
+              {selectedVariants.size > 0 ? (
+                <div className="flex items-center justify-center hover:bg-slate-100 py-1 px-2 rounded cursor-pointer shadow duration-75">
+                  <LucideMoreHorizontal size={20} />
+                </div>
+              ) : (
+                <>
+                  <div className="w-24 text-center">Price</div>
+                  <div className="w-20 text-center">Available</div>
+                </>
+              )}
             </div>
           </div>
 

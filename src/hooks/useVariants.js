@@ -303,7 +303,7 @@ const useVariants = () => {
     if (selectedVariants.size === allPerms.length && allPerms.length > 0) {
       setSelectedVariants(new Set());
     } else {
-      const newSelected = new Set(allPerms.map(p => p.name));
+      const newSelected = new Set(allPerms.map(p => p.originalName));
       setSelectedVariants(newSelected);
     }
   };
