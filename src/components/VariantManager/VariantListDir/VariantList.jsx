@@ -219,6 +219,7 @@ const VariantList = ({
             triggerFileInput={triggerFileInput}
             fileInputRef={fileInputRef}
             handleImageUpload={handleImageUpload}
+            searchTerm={searchTerm}
           />
           <div className="h-5 text-center border-t-1 border-gray-200 py-3">
             Total inventory at Shop location: {totalInventory} available

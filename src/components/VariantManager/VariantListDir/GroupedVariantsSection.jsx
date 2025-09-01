@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, ImagePlus } from 'lucide-react';
+import { useEffect } from 'react';
 
 const GroupedVariantsSection = ({ 
   filteredGrouped, 
@@ -14,8 +15,13 @@ const GroupedVariantsSection = ({
   getGroupInventory, 
   isFlat, 
   imageUrls, 
-  triggerFileInput 
+  triggerFileInput,
+  searchTerm,
 }) => {
+
+  useEffect(() => {
+    console.log('searchTerm: ' + searchTerm);
+  }, [searchTerm])
   return (
     <div className="bg-white px-4 py-0 rounded-lg mb-4">
       {Object.entries(filteredGrouped).map(([group, subs]) => (

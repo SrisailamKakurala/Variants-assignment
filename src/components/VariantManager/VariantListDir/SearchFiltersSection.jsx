@@ -25,7 +25,10 @@ const SearchFiltersSection = ({
               type="text"
               placeholder="Search..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                console.log(e.target.value);
+                setSearchTerm(e.target.value);
+              }}
               className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full pr-10"
               autoFocus
             />
